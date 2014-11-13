@@ -1,15 +1,13 @@
+<!--- literate: syntax=markdown encoding=utf-8 -->
 
 # Step by Step Guide to Implementing a Multi-layer perceptron in C
 
-
-###### Copyright
-
-```c
+<<Copyright>>=
 /*
  * Copyright (c) 2004  John Bullinaria
  * Copyright (c) 2014  Javier Escalada Gómez (kerrigan29a@gmail.com)
  */
-```
+@
 
 This article made by [Javier Escalada Gómez](http://www.github.com/Kerrigan29a)
 is heavyly based on
@@ -139,10 +137,7 @@ rest of this document
 Also, to save getting all the In's and Out's confused, we can write `LayerNIn`
 as `SumN`. Our code can thus be written
 
-
-###### Compute hidden unit activations
-
-```c
+<<Compute hidden unit activations>>=
 /* Compute hidden unit activations */
 for (j=1; j<=NumHidden; j++ ) {
     SumH[p][j] = WeightIH[0][j];
@@ -152,12 +147,9 @@ for (j=1; j<=NumHidden; j++ ) {
 
     Hidden[p][j] = 1.0 / (1.0 + exp(-SumH[p][j]));
 }
-```
+@
 
-
-###### Compute output unit activations and errors
-
-```c
+<<Compute output unit activations and errors>>=
 /* Compute output unit activations and errors */
 for(k=1; k<=NumOutput; k++) {
     SumO[p][k] = WeightHO[0][k];
@@ -183,23 +175,17 @@ for(k=1; k<=NumOutput; k++) {
     /* and */
     <<Compute delta for sigmoidal output and cross-entropy error>>
 }
-```
+@
 
-
-###### Compute sigmoidal output
-
-```c
+<<Compute sigmoidal output>>=
 /* Sigmoidal outputs */
 Output[p][k] = 1.0 / (1.0 + exp(-SumO[p][k]));
-```
+@
 
 Generally we will have a whole set of `NumPattern` training patterns, i.e. pairs
 of vectors, `Input[p][i]` and `Target[p][k]` labelled by the index `p`.
 
-
-###### Training data (XOR function)
-
-```c
+<<Training data (XOR function)>>=
 double  Input[NUM_TRAIN_INPUTS + 1][NUM_INPUT_UNITS + 1] = {
     { 0, 0, 0 },
     { 0, 0, 0 },
@@ -215,7 +201,7 @@ double Target[NUM_TRAIN_INPUTS + 1][NUM_OUTPUT_UNITS + 1] = {
     { 0, 1 },
     { 0, 0 }
 };
-```
+@
 
 The network learns by minimizing some measure of the error of the network's
 actual outputs compared with the target outputs. For example, the sum squared
@@ -236,18 +222,12 @@ for(p=1; p<=NumPattern; p++) {
 deriving the learning algorithm.) If we insert the above code for computing the
 network outputs into the `p` loop of this, we end up with
 
-
-###### Compute sum squared error
-
-```c
+<<Compute sum squared error>>=
 /* Sum squared error */
 Error += 0.5 * (Target[p][k] - Output[p][k]) * (Target[p][k] - Output[p][k]);
-```
+@
 
-
-###### Train with each pattern
-
-```c
+<<Train with each pattern>>=
 Error = 0.0;
 /* Train with each pattern */
 <<Unordered foreach>>
@@ -263,7 +243,7 @@ Error = 0.0;
 
     <<Update weights WeightHO>>
 }
-```
+@
 
 The next stage is to iteratively adjust the weights to minimize the network's
 error. A standard way to do this is by 'gradient descent' on the error function.
@@ -276,18 +256,12 @@ all the mathematics, but for the above sum squared error we can compute and
 apply one iteration (or `epoch`) of the required weight changes `DeltaWeightIH`
 and `DeltaWeightHO` using
 
-
-###### Compute delta for sigmoidal output and sum squared error
-
-```c
+<<Compute delta for sigmoidal output and sum squared error>>=
 /* Delta for sigmoidal outputs and sum squared error */
 DeltaO[k] = (Target[p][k] - Output[p][k]) * Output[p][k] * (1.0 - Output[p][k]);
-```
+@
 
-
-###### Back-propagate errors to hidden layer
-
-```c
+<<Back-propagate errors to hidden layer>>=
 /* Back-propagate errors to hidden layer */
 for(j=1; j<=NumHidden; j++) {
     SumDOW[j] = 0.0;
@@ -297,12 +271,9 @@ for(j=1; j<=NumHidden; j++) {
 
     DeltaH[j] = SumDOW[j] * Hidden[p][j] * (1.0 - Hidden[p][j]);
 }
-```
+@
 
-
-###### Update weights WeightIH
-
-```c
+<<Update weights WeightIH>>=
 /* Update weights WeightIH */
 for(j=1; j<=NumHidden; j++) {
     DeltaWeightIH[0][j] = eta * DeltaH[j]
@@ -316,12 +287,9 @@ for(j=1; j<=NumHidden; j++) {
         WeightIH[i][j] += DeltaWeightIH[i][j];
     }
 }
-```
+@
 
-
-###### Update weights WeightHO
-
-```c
+<<Update weights WeightHO>>=
 /* Update weights WeightHO */
 for(k=1; k<=NumOutput; k++) {
     DeltaWeightHO[0][k] = eta * DeltaO[k]
@@ -335,7 +303,7 @@ for(k=1; k<=NumOutput; k++) {
         WeightHO[j][k] += DeltaWeightHO[j][k];
     }
 }
-```
+@
 
 (There is clearly plenty of scope for re-ordering, combining and simplifying the
 loops here - I will leave that for you to do once you have understood what the
@@ -353,13 +321,10 @@ will cause the weight changes to oscillate wildly, and can slow down or even
 prevent learning altogether. (I generally start by trying eta = 0.1 and explore
 the effects of repeatedly doubling or halving it.)
 
-
-###### Eta and alpha values
-
-```c
+<<Eta and alpha values>>=
 double eta = 0.5;
 double alpha = 0.9;
-```
+@
 
 The complete training process will consist of repeating the above weight updates
 for a number of epochs until some error crierion is met, for example the `Error`
@@ -369,10 +334,7 @@ that sometimes the training can get stuck in a 'local minimum' of the error
 function and never get anywhere the actual minimum.) So, we need to wrap the
 last block of code in something like
 
-
-###### Train
-
-```c
+<<Train>>=
 /* Train */
 for(epoch=0; epoch<MAX_EPOCH; epoch++) {
 
@@ -391,7 +353,7 @@ for(epoch=0; epoch<MAX_EPOCH; epoch++) {
         goto print_result;
     }
 }
-```
+@
 
 If the training patterns are presented in the same systematic order during each
 `epoch`, it is possible for weight oscillations to occur. It is therefore
@@ -406,21 +368,15 @@ for(p=1; p<=NumPattern; p++) {
 
 with
 
-
-###### Unordered foreach
-
-```c
+<<Unordered foreach>>=
 for(np=1; np<=NumPattern; np++) {
     p = ranpat[np];
-```
+@
 
 Generating the random array `ranpat[]` is not quite so simple, but the following
 code will do the job
 
-
-###### Randomize the order of patterns
-
-```c
+<<Randomize the order of patterns>>=
 /* Randomize the order of patterns */
 for( p = 1; p <= NumPattern; p++ ) {
     ranpat[p] = p;
@@ -431,7 +387,7 @@ for( p = 1; p <= NumPattern; p++ ) {
     ranpat[p] = ranpat[np];
     ranpat[np] = op;
 }
-```
+@
 
 Naturally, one must set some initial network weights to start the learning
 process. Starting all the weights at zero is generally not a good idea, as that
@@ -439,10 +395,7 @@ is often a local minimum of the error function. It is normal to initialize all
 the weights with small random values. `smallwt` is the maximum absolute size of
 your initial weights.
 
-
-###### Init the neural network with random values
-
-```c
+<<Init the neural network with random values>>=
 double smallwt = 0.5;
 
 /* Seed random number function */
@@ -463,37 +416,28 @@ for( k = 1; k <= NumOutput; k ++ ) {
         WeightHO[j][k] = ranged_rand(smallwt);
     }
 }
-```
+@
 
-
-###### Ranged random number generator
-
-```c
+<<Ranged random number generator>>=
 /*
  * This function generates values with the interval [-limit, limit)
  */
 #define ranged_rand(limit) (2.0 * ( normalized_rand() - 0.5 ) * (limit))
-```
+@
 
-
-###### Normalized random number generator
-
-```c
+<<Normalized random number generator>>=
 /*
  * This is a good approximation to a uniform random distribution in the interval
  * [0, 1):
  * http://www.thinkage.ca/english/gcos/expl/c/lib/rand.html
  */
 #define normalized_rand() ((double) rand() / (RAND_MAX + 1))
-```
+@
 
 We now have enough code to put together a working neural network program. I have
 cut and pasted the above code into the file [mlp.c](mlp.c).
 
-
-###### mlp.c
-
-```c
+<<mlp.c>>=
 <<Copyright>>
 
 #include <stdio.h>
@@ -578,7 +522,7 @@ print_result:
     fprintf(stdout, "\n\nDone!\n");
     return 0;
 }
-```
+@
 
 I've left plenty for the reader to do to convert this into a useful program, for
 example:
@@ -606,35 +550,23 @@ But from here on, you're on your own. I hope you found this page useful...
 
 # APPENDIX I: REAL VALUES
 
-
-###### Compute linear output
-
-```c
+<<Compute linear output>>=
 /* Linear outputs */
 // Output[p][k] = SumO[p][k];
-```
-
-###### Compute delta for linear output and sum squared error
-
-```c
+@
+<<Compute delta for linear output and sum squared error>>=
 /* Delta for linear outputs and sum squared error */
 // DeltaO[k] = Target[p][k] - Output[p][k];
-```
+@
 
 
 # APPENDIX II: CROSS-ENTROPY ERROR
 
-
-###### Compute cross-entropy error
-
-```c
+<<Compute cross-entropy error>>=
 /* Cross-entropy error */
 // Error -= (Target[p][k] * log(Output[p][k]) + (1.0 - Target[p][k]) * log(1.0 - Output[p][k]));
-```
-
-###### Compute delta for sigmoidal output and cross-entropy error
-
-```c
+@
+<<Compute delta for sigmoidal output and cross-entropy error>>=
 /* Delta for sigmoidal outputs and cross-entropy error */
 // DeltaO[k] = Target[p][k] - Output[p][k];
-```
+@

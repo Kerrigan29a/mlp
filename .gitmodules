@@ -1,0 +1,3 @@
+[submodule "noweb.py"]
+	path = noweb.py
+	url = https://github.com/Kerrigan29a/noweb.py.git
